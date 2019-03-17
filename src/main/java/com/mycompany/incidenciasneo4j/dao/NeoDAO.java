@@ -6,6 +6,7 @@
 package com.mycompany.incidenciasneo4j.dao;
 
 import com.mycompany.incidenciasneo4j.model.Employee;
+import java.util.ArrayList;
 import java.util.List;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
@@ -67,4 +68,28 @@ public class NeoDAO implements AutoCloseable {
     }
         return checked;
 }
+    
+    public void removeEmployee(Employee e){
+        try(Session session = driver.session()){
+            session.run("MATCH(e:Employee) WHERE id(e)="+e.getId()+" DELETE e");
+        }
+    }
+    
+    public List getAllEmployees(){
+        List<Employee> list = new ArrayList();
+        try(Session session = driver.session()){
+            StatementResult rs = session.run("MATCH(e:Employee) RETURN id(e) as id,e.username as username,e.password as password");
+            Record record = rs.next();
+            for(int i=0;i<record.size();i++){
+                Employee e = new Employee();
+                e.setId(record.get("id").asInt());
+                e.setUsername(record.get("username").asString());
+                e.setPass(record.get("password").asString());
+                list.add(e);
+            }
+        }catch(NoSuchRecordException ex){
+            System.out.println("No hay empleados");
+        }
+        return list;
+    }
 }

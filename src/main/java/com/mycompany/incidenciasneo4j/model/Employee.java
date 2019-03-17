@@ -70,4 +70,10 @@ public class Employee {
         this.username = username;
     }
 
+    @Override
+    public String toString() {
+        return "Employee{username=" + username + ", pass=" + pass + '}';
+    }
+
+    
 }
