@@ -37,59 +37,74 @@ public class NeoDAO implements AutoCloseable {
         driver.close();
     }
 
-    public void insertEmployee(String username, String password) {
+    public void insertEmployee(Employee e) {
         try (Session session = driver.session()) {
-            session.run("CREATE (employee:Employee{username:'" + username + "',password:'" + password + "'})");
+            session.run("CREATE (employee:Employee{username:'" + e.getUsername() + "',password:'" + e.getPass() + "'})");
         }
 
     }
+    
+    public void insertIncidence(Employee o,Employee d,boolean isUrgent,String description){
+        try(Session session = driver.session()){
+            session.run("CREATE (incidence:Incidence{})");
+        }
+    }
 
-    /*public Employee getEmployeeById() {
-        Employee e = null;
+    public Employee getEmployeeById(Employee e) {
+        Employee emp = new Employee();
         try (Session session = driver.session()) {
-            StatementResult x = session.run("MATCH(e:Employee) where id(e)=61 return id(e) as id,e.username as username,e.password as password");
+            StatementResult x = session.run("MATCH(e:Employee) where id(e)="+e.getId()+" return id(e) as id,e.username as username,e.password as password");
             Record record = x.next();
+            emp.setId(record.get("id").asInt());
+            emp.setUsername(record.get("username").asString());
+            emp.setPass(record.get("password").asString());
+        }
+        return emp;
+    }
+     
+    
+ public Employee loginEmployee(String user, String pass) {
+     Employee e = new Employee();
+     try (Session session = driver.session()) {
+            StatementResult sr = session.run("MATCH (e:Employee {username:'"+user+"',password:'"+pass+"'}) RETURN id(e) as id,e.username as username,e.password as password");
+            Record record = sr.next();
             e.setId(record.get("id").asInt());
             e.setUsername(record.get("username").asString());
             e.setPass(record.get("password").asString());
-        }
-        return e;
-    }
-     */
-    public boolean correctLogin(String user, String pass) {
-        
-    boolean checked = false;
-        try (Session session = driver.session()) {
-            StatementResult sr = session.run("MATCH (e:Employee {username:'"+user+"',password:'"+pass+"'}) return e");
-            Record record = sr.next();
-            checked = true;
     }catch(NoSuchRecordException ex){
             System.out.println("Login Incorrecto");
     }
-        return checked;
+        return e;
 }
+     
     
-    public void removeEmployee(Employee e){
-        try(Session session = driver.session()){
-            session.run("MATCH(e:Employee) WHERE id(e)="+e.getId()+" DELETE e");
+    public void removeEmployee(Employee e) {
+        try (Session session = driver.session()) {
+            session.run("MATCH(e:Employee) WHERE id(e)=" + e.getId() + " DELETE e");
         }
     }
     
-    public List getAllEmployees(){
-        List<Employee> list = new ArrayList();
+    public void updateEmployee(Employee e){
         try(Session session = driver.session()){
+            session.run("MATCH(e:Employee) WHERE id(e)="+e.getId()+" SET e.password = '"+e.getPass()+"'");
+        }
+    }
+
+    /*public List getAllEmployees() {
+        List<Employee> employees = new ArrayList();
+        try (Session session = driver.session()) {
             StatementResult rs = session.run("MATCH(e:Employee) RETURN id(e) as id,e.username as username,e.password as password");
-            Record record = rs.next();
-            for(int i=0;i<record.size();i++){
+            List<Record> list = rs.list();
+            for (int i = 0; i < list.size(); i++) {
                 Employee e = new Employee();
-                e.setId(record.get("id").asInt());
-                e.setUsername(record.get("username").asString());
-                e.setPass(record.get("password").asString());
-                list.add(e);
+                e.setId(list.get(i).get("id").asInt());
+                e.setUsername(list.get(i).get("username").asString());
+                e.setPass(list.get(i).get("password").asString());
+                employees.add(e);
             }
-        }catch(NoSuchRecordException ex){
+        } catch (NoSuchRecordException ex) {
             System.out.println("No hay empleados");
         }
-        return list;
-    }
+        return employees;
+    }*/
 }

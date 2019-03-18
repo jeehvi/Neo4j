@@ -9,6 +9,9 @@ import com.mycompany.incidenciasneo4j.InputAsker;
 import com.mycompany.incidenciasneo4j.dao.NeoDAO;
 import com.mycompany.incidenciasneo4j.model.Employee;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.neo4j.driver.v1.Record;
 
 /**
  *
@@ -17,74 +20,78 @@ import java.util.List;
 public class Manager {
 
     NeoDAO dao = new NeoDAO("bolt://localhost:7687", "neo4j", "1234");
-    Employee userLogged = null;
+    Employee userLogged = new Employee();
 
     public void callMenu() {
-        boolean goodLogin = false;
-        do {
-            goodLogin = login();
-        } while (goodLogin == false);
+        try {
+            boolean goodLogin = false;
+            do {
+                goodLogin = login();
+            } while (goodLogin == false);
 
-        int op;
-        boolean end = false;
-        do {
-            menu();
-            op = InputAsker.askInt("Opcion: ");
-            switch (op) {
-                case 0:
-                    end = true;
-                    break;
-                case 1:
-                    //insert employee
-                    insertEmployee();
-                    break;
-                case 2:
-                    //modify employee
+            int op;
+            boolean end = false;
+            do {
+                menu();
+                op = InputAsker.askInt("Opcion: ");
+                switch (op) {
+                    case 0:
+                        end = true;
+                        break;
+                    case 1:
+                        //insert employee
+                        insertEmployee();
+                        break;
+                    case 2:
+                        //modify employee
+                        updateEmployee();
+                        break;
+                    case 3:
+                        //delete employee
+                        removeEmployee();
+                        break;
+                    case 4:
+                        //get incidence by id
 
-                    break;
-                case 3:
-                    //delete employee
-                    removeEmployee();
-                    break;
-                case 4:
-                    //get incidence by id
+                        break;
+                    case 5:
+                        //get all incidences
 
-                    break;
-                case 5:
-                    //get all incidences
+                        break;
+                    case 6:
+                        //insert incidence
 
-                    break;
-                case 6:
-                    //insert incidence
+                        break;
+                    case 7:
+                        //get incidence by destinator
 
-                    break;
-                case 7:
-                    //get incidence by destinator
+                        break;
+                    case 8:
+                        //get incidence by origin
 
-                    break;
-                case 8:
-                    //get incidence by origin
+                        break;
+                    case 9:
+                        //insert event to history table
 
-                    break;
-                case 9:
-                    //insert event to history table
+                        break;
+                    case 10:
+                        //Get last acces from an employee
 
-                    break;
-                case 10:
-                    //Get last acces from an employee
+                        break;
+                    case 11:
+                        //employee ranking by number of incidences
 
-                    break;
-                case 11:
-                    //employee ranking by number of incidences
+                        break;
+                    default:
+                        System.out.println("Wrong option");
+                        break;
+                }
 
-                    break;
-                default:
-                    System.out.println("Wrong option");
-                    break;
-            }
-
-        } while (end != true);
-
+            } while (end != true);
+            dao.close();
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     public void menu() {
@@ -100,40 +107,64 @@ public class Manager {
         System.out.println("9-Insert event to history table");
         System.out.println("10-Get last acces from an employee");
         System.out.println("11-Employee ranking by the number of Incidences");
+        System.out.println("0-EXIT");
     }
 
     public boolean login() {
         System.out.println("-----LOG IN-----");
         String username = InputAsker.askString("Username: ");
         String password = InputAsker.askString("Password: ");
-        return dao.correctLogin(username, password);
+        Employee e = dao.loginEmployee(username, password);
+        if (e.getUsername() != null) {
+            userLogged = e;
+            return true;
+        }
+        return false;
     }
 
     public void insertEmployee() {
         System.out.println("-----INSERT EMPLOYEE-----");
         String username = InputAsker.askString("Username: ");
         String password = InputAsker.askString("Password: ");
-        dao.insertEmployee(username, password);
+        Employee e = new Employee();
+        e.setUsername(username);
+        e.setPass(password);
+        dao.insertEmployee(e);
     }
 
     public void removeEmployee() {
-        System.out.println("-----REMOVE EMPLOYEE-----");
-        List<Employee> list = dao.getAllEmployees();
-        int contador = 0;
-        for (int i = 0; i < list.size(); i++) {
-            contador++;
-            System.out.println(contador + "-" + list.get(i).toString());
-        }
-        int selected = InputAsker.askInt("Which employee do you want to delete?(0 TO CANCEL)");
-        if(selected<0){
-            System.out.println("Opcion incorrecta");
-        }else if(selected>list.size()){
-            System.out.println("Opcion incorrecta");
-        } else if(selected ==0){
-            System.out.println("Operacion cancelada");
-        } else {
-            dao.removeEmployee(list.get(selected-1));
+        try {
+            System.out.println("Are you sure do you want to delete your account?");
+            String answer = InputAsker.askString("YES/NO");
+            switch (answer.toLowerCase()) {
+                case "y":
+                case "yes":
+                    dao.removeEmployee(userLogged);
+                    dao.close();
+                    callMenu();
+                    break;
+                case "n":
+                case "no":
+                    System.out.println("The operation was cancelled.");
+                    break;
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
+    public void updateEmployee() {
+        System.out.println("-----UPDATE EMPLOYEE-----");
+        System.out.println("User -> " + userLogged.getUsername());
+
+        String actualPassword = InputAsker.askString("Actual Password:");
+        if (actualPassword.equals(userLogged.getPass())) {
+            String newPassword = InputAsker.askString("New Password: ");
+            userLogged.setPass(newPassword);
+            dao.updateEmployee(userLogged);
+        }else {
+            System.out.println("Incorrect Password");
+        }
+
+    }
 }

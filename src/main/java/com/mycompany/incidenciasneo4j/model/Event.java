@@ -14,32 +14,32 @@ import java.util.Date;
 public class Event {
 
     private Date date;
-    private String argument;
+    private Employee employee;
+    private int typeEvent;
 
-    public Event(Date date, String argument) {
+    public Event(Date date, Employee employee, int typeEvent) {
         this.date = date;
-        this.argument = argument;
+        this.employee = employee;
+        this.typeEvent = typeEvent;
     }
 
     public Event() {
     }
 
-    /**
-     * Get the value of argument
-     *
-     * @return the value of argument
-     */
-    public String getArgument() {
-        return argument;
+    public Employee getEmployee() {
+        return employee;
     }
 
-    /**
-     * Set the value of argument
-     *
-     * @param argument new value of argument
-     */
-    public void setArgument(String argument) {
-        this.argument = argument;
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
+    public int getTypeEvent() {
+        return typeEvent;
+    }
+
+    public void setTypeEvent(int typeEvent) {
+        this.typeEvent = typeEvent;
     }
 
     /**

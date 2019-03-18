@@ -14,18 +14,17 @@ import com.mycompany.incidenciasneo4j.model.Employee;
 public class Incidence {
 
     private int id;
-
     private Employee destination;
-
     private Employee origin;
-
     private Boolean urgent;
+    private String description;
 
-    public Incidence(int id, Employee destination, Employee origin, Boolean urgent) {
+    public Incidence(int id, Employee destination, Employee origin, Boolean urgent,String description) {
         this.id = id;
         this.destination = destination;
         this.origin = origin;
         this.urgent = urgent;
+        this.description = description;
     }
 
     public Incidence() {
@@ -102,5 +101,16 @@ public class Incidence {
     public void setId(int id) {
         this.id = id;
     }
+
+    
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    
 
 }
