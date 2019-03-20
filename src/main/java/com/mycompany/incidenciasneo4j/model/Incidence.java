@@ -14,15 +14,15 @@ import com.mycompany.incidenciasneo4j.model.Employee;
 public class Incidence {
 
     private int id;
-    private Employee destination;
-    private Employee origin;
+    private Employee employeeReceiver;
+    private Employee employeeSender;
     private Boolean urgent;
     private String description;
 
     public Incidence(int id, Employee destination, Employee origin, Boolean urgent,String description) {
         this.id = id;
-        this.destination = destination;
-        this.origin = origin;
+        this.employeeReceiver = destination;
+        this.employeeSender = origin;
         this.urgent = urgent;
         this.description = description;
     }
@@ -49,39 +49,39 @@ public class Incidence {
     }
 
     /**
-     * Get the value of origin
+     * Get the value of employeeSender
      *
-     * @return the value of origin
+     * @return the value of employeeSender
      */
     public Employee getOrigin() {
-        return origin;
+        return employeeSender;
     }
 
     /**
-     * Set the value of origin
+     * Set the value of employeeSender
      *
-     * @param origin new value of origin
+     * @param origin new value of employeeSender
      */
     public void setOrigin(Employee origin) {
-        this.origin = origin;
+        this.employeeSender = origin;
     }
 
     /**
-     * Get the value of destination
+     * Get the value of employeeReceiver
      *
-     * @return the value of destination
+     * @return the value of employeeReceiver
      */
     public Employee getDestination() {
-        return destination;
+        return employeeReceiver;
     }
 
     /**
-     * Set the value of destination
+     * Set the value of employeeReceiver
      *
-     * @param destination new value of destination
+     * @param destination new value of employeeReceiver
      */
     public void setDestination(Employee destination) {
-        this.destination = destination;
+        this.employeeReceiver = destination;
     }
 
     /**

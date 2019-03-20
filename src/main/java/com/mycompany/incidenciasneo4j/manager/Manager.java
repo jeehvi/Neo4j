@@ -157,14 +157,26 @@ public class Manager {
         System.out.println("-----UPDATE EMPLOYEE-----");
         System.out.println("User -> " + userLogged.getUsername());
 
-        String actualPassword = InputAsker.askString("Actual Password:");
+        
+        boolean actualPassOk =false;
+        do{
+            String actualPassword = InputAsker.askString("Actual Password:/(0 TO CANCEL)");
+         if(actualPassword.equals("0")){
+             System.out.println("The operation was cancelled");
+             actualPassOk = true;
+         } else {  
         if (actualPassword.equals(userLogged.getPass())) {
             String newPassword = InputAsker.askString("New Password: ");
             userLogged.setPass(newPassword);
             dao.updateEmployee(userLogged);
+            actualPassOk = true;
         }else {
             System.out.println("Incorrect Password");
         }
+         }
+        }while(actualPassOk!=true);
 
     }
+    
+    
 }
