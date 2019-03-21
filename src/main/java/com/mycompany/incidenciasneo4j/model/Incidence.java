@@ -14,6 +14,7 @@ import com.mycompany.incidenciasneo4j.model.Employee;
 public class Incidence {
 
     private int id;
+    private String creationDate;
     private Employee employeeReceiver;
     private Employee employeeSender;
     private Boolean urgent;
@@ -30,6 +31,16 @@ public class Incidence {
     public Incidence() {
     }
 
+    public String getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(String creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    
+    
     /**
      * Get the value of urgent
      *

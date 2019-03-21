@@ -41,7 +41,7 @@ public class NeoDAO implements AutoCloseable {
     public void insertEmployee(Employee e) {
         if(!userExists(e)){
             try (Session session = driver.session()) {
-            session.run("CREATE (employee:Employee{username:'" + e.getUsername() + "',password:'" + e.getPass() + "'})");
+            session.run("CREATE (employee:Employee{username:'" + e.getUsername() + "',password:'" + e.getPass() + "',department:'"+e.getDepartment()+"'})");
         }
         }else {
             System.out.println("Username already exists");     
@@ -69,11 +69,12 @@ public class NeoDAO implements AutoCloseable {
     public Employee loginEmployee(String user, String pass) {
         Employee e = new Employee();
         try (Session session = driver.session()) {
-            StatementResult sr = session.run("MATCH (e:Employee {username:'" + user + "',password:'" + pass + "'}) RETURN id(e) as id,e.username as username,e.password as password");
+            StatementResult sr = session.run("MATCH (e:Employee {username:'" + user + "',password:'" + pass + "'}) RETURN id(e) as id,e.username as username,e.password as password,e.department as department");
             Record record = sr.next();
             e.setId(record.get("id").asInt());
             e.setUsername(record.get("username").asString());
             e.setPass(record.get("password").asString());
+            e.setDepartment(record.get("department").asString());
         } catch (NoSuchRecordException ex) {
             System.out.println("Login Incorrecto");
         }
@@ -88,7 +89,7 @@ public class NeoDAO implements AutoCloseable {
 
     public void updateEmployee(Employee e) {
         try (Session session = driver.session()) {
-            session.run("MATCH(e:Employee) WHERE id(e)=" + e.getId() + " SET e.password = '" + e.getPass() + "'");
+            session.run("MATCH(e:Employee) WHERE id(e)=" + e.getId() + " SET e.password = '" + e.getPass() + "',e.department = '"+e.getDepartment()+"'");
         }
     }
 
@@ -124,11 +125,17 @@ public class NeoDAO implements AutoCloseable {
     public List getAllIncidences() {
         List<Incidence> incidences = new ArrayList();
         try (Session session = driver.session()) {
-            StatementResult rs = session.run("MATCH(i:Incidence) RETURN id(i) as id,i.sender as sender,i.receiver as receiver,i.urgent as urgent,i.description as description");
+            StatementResult rs = session.run("MATCH(i:Incidence) RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description");
             List<Record> list = rs.list();
             for (int i = 0; i < list.size(); i++) {
                 Incidence incidence = new Incidence();
+                incidence.setId(list.get(i).get("id").asInt());
+                incidence.setCreationDate(list.get(i).get("date").asString());
+                Employee s = new Employee();
+                s.setId(list.get(i).get("id").asInt());
+                Employee sender = getEmployeeById(s);
                 
+                incidence.setOrigin(origin);
                 incidences.add(incidence);
             }
         } catch (NoSuchRecordException ex) {

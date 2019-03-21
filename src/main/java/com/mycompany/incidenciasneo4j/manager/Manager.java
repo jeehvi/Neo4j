@@ -124,12 +124,18 @@ public class Manager {
 
     public void insertEmployee() {
         System.out.println("-----INSERT EMPLOYEE-----");
-        String username = InputAsker.askString("Username: ");
+        String username = InputAsker.askString("Username: /(0) TO CANCEL");
+        if(username.equals("0")){
+            System.out.println("The operation was cancelled");
+        } else {
         String password = InputAsker.askString("Password: ");
+        String department = InputAsker.askString("Department: ");
         Employee e = new Employee();
         e.setUsername(username);
         e.setPass(password);
+        e.setDepartment(department);
         dao.insertEmployee(e);
+        }
     }
 
     public void removeEmployee() {
@@ -155,28 +161,43 @@ public class Manager {
 
     public void updateEmployee() {
         System.out.println("-----UPDATE EMPLOYEE-----");
-        System.out.println("User -> " + userLogged.getUsername());
+        System.out.println("User -> " + userLogged.getUsername() + " - Department -> " + userLogged.getDepartment());
 
-        
-        boolean actualPassOk =false;
-        do{
-            String actualPassword = InputAsker.askString("Actual Password:/(0 TO CANCEL)");
-         if(actualPassword.equals("0")){
-             System.out.println("The operation was cancelled");
-             actualPassOk = true;
-         } else {  
-        if (actualPassword.equals(userLogged.getPass())) {
-            String newPassword = InputAsker.askString("New Password: ");
-            userLogged.setPass(newPassword);
-            dao.updateEmployee(userLogged);
-            actualPassOk = true;
-        }else {
-            System.out.println("Incorrect Password");
+        System.out.println("1-Update password");
+        System.out.println("2-Update department");
+
+        int opc = InputAsker.askInt("What do you want to modify?/(0) TO CANCEL");
+        switch (opc) {
+            case 0:
+                System.out.println("The operation was cancelled");
+                break;
+            case 1:
+                boolean actualPassOk = false;
+                do {
+                    String actualPassword = InputAsker.askString("Actual Password:/(0 TO CANCEL)");
+                    if (actualPassword.equals("0")) {
+                        System.out.println("The operation was cancelled");
+                        actualPassOk = true;
+                    } else {
+                        if (actualPassword.equals(userLogged.getPass())) {
+                            String newPassword = InputAsker.askString("New Password: ");
+                            userLogged.setPass(newPassword);
+                            dao.updateEmployee(userLogged);
+                            actualPassOk = true;
+                        } else {
+                            System.out.println("Incorrect Password");
+                        }
+                    }
+                } while (actualPassOk != true);
+                break;
+            case 2:
+                String newDepartment = InputAsker.askString("Set a new department:");
+                userLogged.setDepartment(newDepartment);
+                dao.updateEmployee(userLogged);
+                break;
+
         }
-         }
-        }while(actualPassOk!=true);
 
     }
-    
-    
+
 }

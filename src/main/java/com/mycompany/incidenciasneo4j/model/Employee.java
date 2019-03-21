@@ -14,6 +14,7 @@ public class Employee {
     private int id;
     private String username;
     private String pass;
+    private String department;
     
 
     public Employee(int id,String username, String pass) {
@@ -69,11 +70,18 @@ public class Employee {
     public void setUsername(String username) {
         this.username = username;
     }
-
-    @Override
-    public String toString() {
-        return "Employee{username=" + username + ", pass=" + pass + '}';
+    
+     public String getDepartment() {
+        return department;
     }
 
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+
+   
+
+    
     
 }
