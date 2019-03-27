@@ -8,6 +8,7 @@ package com.mycompany.incidenciasneo4j.manager;
 import com.mycompany.incidenciasneo4j.InputAsker;
 import com.mycompany.incidenciasneo4j.dao.NeoDAO;
 import com.mycompany.incidenciasneo4j.model.Employee;
+import com.mycompany.incidenciasneo4j.model.Incidence;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,7 +53,7 @@ public class Manager {
                         break;
                     case 4:
                         //get incidence by id
-
+                        getIncidenceById();
                         break;
                     case 5:
                         //get all incidences
@@ -125,16 +126,16 @@ public class Manager {
     public void insertEmployee() {
         System.out.println("-----INSERT EMPLOYEE-----");
         String username = InputAsker.askString("Username: /(0) TO CANCEL");
-        if(username.equals("0")){
+        if (username.equals("0")) {
             System.out.println("The operation was cancelled");
         } else {
-        String password = InputAsker.askString("Password: ");
-        String department = InputAsker.askString("Department: ");
-        Employee e = new Employee();
-        e.setUsername(username);
-        e.setPass(password);
-        e.setDepartment(department);
-        dao.insertEmployee(e);
+            String password = InputAsker.askString("Password: ");
+            String department = InputAsker.askString("Department: ");
+            Employee e = new Employee();
+            e.setUsername(username);
+            e.setPass(password);
+            e.setDepartment(department);
+            dao.insertEmployee(e);
         }
     }
 
@@ -198,6 +199,20 @@ public class Manager {
 
         }
 
+    }
+
+    public void getIncidenceById() {
+        System.out.println("-----SHOW INCIDENCE DETAILS-----");
+        List<Incidence> list = dao.getAllIncidences();
+        System.out.println("hola");
+        System.out.println(list.size());
+        for (Incidence i : list) {
+            System.out.println(i.toString());
+            if (i.getDestination().getUsername().equals(userLogged.getUsername()) || i.getOrigin().getUsername().equals(userLogged.getUsername())) {
+                System.out.println("Incidence " + i.getId() + "  ->  Sender: " + i.getOrigin().getUsername() + "Receover: " + i.getDestination().getUsername());
+            }
+        }
+        
     }
 
 }

@@ -7,7 +7,12 @@ package com.mycompany.incidenciasneo4j.dao;
 
 import com.mycompany.incidenciasneo4j.model.Employee;
 import com.mycompany.incidenciasneo4j.model.Incidence;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
@@ -39,12 +44,12 @@ public class NeoDAO implements AutoCloseable {
     }
 
     public void insertEmployee(Employee e) {
-        if(!userExists(e)){
+        if (!userExists(e)) {
             try (Session session = driver.session()) {
-            session.run("CREATE (employee:Employee{username:'" + e.getUsername() + "',password:'" + e.getPass() + "',department:'"+e.getDepartment()+"'})");
-        }
-        }else {
-            System.out.println("Username already exists");     
+                session.run("CREATE (employee:Employee{username:'" + e.getUsername() + "',password:'" + e.getPass() + "',department:'" + e.getDepartment() + "'})");
+            }
+        } else {
+            System.out.println("Username already exists");
         }
     }
 
@@ -89,7 +94,7 @@ public class NeoDAO implements AutoCloseable {
 
     public void updateEmployee(Employee e) {
         try (Session session = driver.session()) {
-            session.run("MATCH(e:Employee) WHERE id(e)=" + e.getId() + " SET e.password = '" + e.getPass() + "',e.department = '"+e.getDepartment()+"'");
+            session.run("MATCH(e:Employee) WHERE id(e)=" + e.getId() + " SET e.password = '" + e.getPass() + "',e.department = '" + e.getDepartment() + "'");
         }
     }
 
@@ -113,7 +118,7 @@ public class NeoDAO implements AutoCloseable {
     public boolean userExists(Employee e) {
         boolean exists = false;
         try (Session session = driver.session()) {
-            StatementResult sr = session.run("MATCH (e:Employee {username:'"+e.getUsername()+"'}) RETURN id(e) as id,e.username as username,e.password as password");
+            StatementResult sr = session.run("MATCH (e:Employee {username:'" + e.getUsername() + "'}) RETURN id(e) as id,e.username as username,e.password as password");
             Record record = sr.next();
             exists = true;
         } catch (NoSuchRecordException ex) {
@@ -130,12 +135,26 @@ public class NeoDAO implements AutoCloseable {
             for (int i = 0; i < list.size(); i++) {
                 Incidence incidence = new Incidence();
                 incidence.setId(list.get(i).get("id").asInt());
-                incidence.setCreationDate(list.get(i).get("date").asString());
+                
+                //String dateTime = list.get(i).get("date").asLocalDateTime().toString();
+                //String[] getDate = dateTime.split("T");
+                //String Date = getDate[0];
+                //String[] getTime = getDate[1].split(".");
+                //Date+= " "+getTime[0];
+                incidence.setCreationDate(new Date().toString());
+                
                 Employee s = new Employee();
                 s.setId(list.get(i).get("id").asInt());
                 Employee sender = getEmployeeById(s);
+                incidence.setOrigin(sender);
                 
-                incidence.setOrigin(origin);
+                Employee r = new Employee();
+                r.setId(list.get(i).get("senderId").asInt());
+                Employee receiver = getEmployeeById(r);
+                incidence.setDestination(receiver);
+                
+                incidence.setUrgent(list.get(i).get("urgent").asBoolean());
+                incidence.setDescription(list.get(i).get("description").asString());
                 incidences.add(incidence);
             }
         } catch (NoSuchRecordException ex) {

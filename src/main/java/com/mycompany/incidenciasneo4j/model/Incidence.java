@@ -121,6 +121,18 @@ public class Incidence {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        String urgent = "";
+        if(this.urgent == true){
+            urgent = "Incidencia urgente";
+        } else {
+            urgent = "Incidencia no urgente";
+        }
+        return "Incidence{" + "id=" + id + ", creationDate=" + creationDate + ", employeeReceiver=" + employeeReceiver.getUsername() + ", employeeSender=" + employeeSender.getUsername() + ", urgent=" + urgent + ", description=" + description + '}';
+    }
+    
     
     
 
