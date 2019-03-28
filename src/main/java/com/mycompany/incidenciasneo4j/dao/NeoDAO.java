@@ -127,38 +127,36 @@ public class NeoDAO implements AutoCloseable {
         return exists;
     }
 
-    public List getAllIncidences() {
+    public List getAllIncidences(Employee logged) {
         List<Incidence> incidences = new ArrayList();
         try (Session session = driver.session()) {
-            StatementResult rs = session.run("MATCH(i:Incidence) RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description");
+            String query = "MATCH(i:Incidence) WHERE i.sender=" + logged.getId() + " or i.receiver=" + logged.getId() + " RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
+            StatementResult rs = session.run(query);
             List<Record> list = rs.list();
             for (int i = 0; i < list.size(); i++) {
                 Incidence incidence = new Incidence();
                 incidence.setId(list.get(i).get("id").asInt());
-                
-                //String dateTime = list.get(i).get("date").asLocalDateTime().toString();
-                //String[] getDate = dateTime.split("T");
-                //String Date = getDate[0];
-                //String[] getTime = getDate[1].split(".");
-                //Date+= " "+getTime[0];
-                incidence.setCreationDate(new Date().toString());
-                
+
+                String dateTime = list.get(i).get("date").asLocalDateTime().toString();
+                incidence.setCreationDate(dateTime);
+
                 Employee s = new Employee();
-                s.setId(list.get(i).get("id").asInt());
+                s.setId(list.get(i).get("receiverId").asInt());
                 Employee sender = getEmployeeById(s);
                 incidence.setOrigin(sender);
-                
+
                 Employee r = new Employee();
                 r.setId(list.get(i).get("senderId").asInt());
                 Employee receiver = getEmployeeById(r);
                 incidence.setDestination(receiver);
-                
+
                 incidence.setUrgent(list.get(i).get("urgent").asBoolean());
                 incidence.setDescription(list.get(i).get("description").asString());
                 incidences.add(incidence);
             }
         } catch (NoSuchRecordException ex) {
-            System.out.println("No hay ninguna incidencia");
+            System.out.println(ex.getMessage());
+
         }
         return incidences;
     }

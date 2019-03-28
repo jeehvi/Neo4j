@@ -203,16 +203,24 @@ public class Manager {
 
     public void getIncidenceById() {
         System.out.println("-----SHOW INCIDENCE DETAILS-----");
-        List<Incidence> list = dao.getAllIncidences();
-        System.out.println("hola");
-        System.out.println(list.size());
+        List<Incidence> list = dao.getAllIncidences(userLogged);
         for (Incidence i : list) {
-            System.out.println(i.toString());
-            if (i.getDestination().getUsername().equals(userLogged.getUsername()) || i.getOrigin().getUsername().equals(userLogged.getUsername())) {
-                System.out.println("Incidence " + i.getId() + "  ->  Sender: " + i.getOrigin().getUsername() + "Receover: " + i.getDestination().getUsername());
+                System.out.println("Incidence " + i.getId() + "  ->  Sender: " + i.getOrigin().getUsername() + " Receiver: " + i.getDestination().getUsername());
+        }
+        int incidence = InputAsker.askInt("See details of Incidence with id: ");
+        boolean exists = false;
+        Incidence choosen = new Incidence();
+        for(Incidence i : list){
+            if(i.getId() == incidence){
+                choosen = i;
+                exists = true;
             }
         }
-        
+        if(!exists){
+            System.out.println("Incorrect Incidence");
+        } else{
+            System.out.println("Incidence: "+choosen.getId() + "  -> Creation Date: "+choosen.getCreationDate()+" Sender: " + choosen.getOrigin().getUsername() + " Receiver: " + choosen.getDestination().getUsername() + " Description: "+choosen.getDescription());
+        }
     }
 
 }
