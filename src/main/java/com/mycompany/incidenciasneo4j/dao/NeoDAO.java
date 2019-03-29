@@ -5,6 +5,7 @@
  */
 package com.mycompany.incidenciasneo4j.dao;
 
+import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
 import com.mycompany.incidenciasneo4j.model.Employee;
 import com.mycompany.incidenciasneo4j.model.Incidence;
 import java.text.DateFormat;
@@ -43,35 +44,40 @@ public class NeoDAO implements AutoCloseable {
         driver.close();
     }
 
-    public void insertEmployee(Employee e) {
+    public void insertEmployee(Employee e) throws Exceptions {
         if (!userExists(e)) {
             try (Session session = driver.session()) {
                 session.run("CREATE (employee:Employee{username:'" + e.getUsername() + "',password:'" + e.getPass() + "',department:'" + e.getDepartment() + "'})");
             }
         } else {
-            System.out.println("Username already exists");
+            throw new Exceptions(Exceptions.USERNAME_EXISTS);
         }
     }
 
-    public void insertIncidence(Employee o, Employee d, boolean isUrgent, String description) {
+    public void insertIncidence(Incidence i) {
+        Date date = new Date();
+        DateFormat df = new SimpleDateFormat("yyyy/MM/dd hh:mm");
+        String creationDate = df.format(date);
         try (Session session = driver.session()) {
-            session.run("CREATE (incidence:Incidence{})");
+            session.run("CREATE (incidence:Incidence{creationDate:'"+creationDate+"',sender:"+i.getOrigin().getId()+",receiver:"+i.getDestination().getId()+",urgent:"+i.isUrgent()+",description:'"+i.getDescription()+"'})");
         }
     }
 
-    public Employee getEmployeeById(Employee e) {
+    public Employee getEmployeeById(int id) throws Exceptions {
         Employee emp = new Employee();
         try (Session session = driver.session()) {
-            StatementResult x = session.run("MATCH(e:Employee) where id(e)=" + e.getId() + " return id(e) as id,e.username as username,e.password as password");
+            StatementResult x = session.run("MATCH(e:Employee) where id(e)=" + id + " return id(e) as id,e.username as username,e.password as password");
             Record record = x.next();
             emp.setId(record.get("id").asInt());
             emp.setUsername(record.get("username").asString());
             emp.setPass(record.get("password").asString());
+        }catch(NoSuchRecordException ex){
+            throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
         }
         return emp;
     }
 
-    public Employee loginEmployee(String user, String pass) {
+    public Employee loginEmployee(String user, String pass) throws Exceptions {
         Employee e = new Employee();
         try (Session session = driver.session()) {
             StatementResult sr = session.run("MATCH (e:Employee {username:'" + user + "',password:'" + pass + "'}) RETURN id(e) as id,e.username as username,e.password as password,e.department as department");
@@ -81,7 +87,7 @@ public class NeoDAO implements AutoCloseable {
             e.setPass(record.get("password").asString());
             e.setDepartment(record.get("department").asString());
         } catch (NoSuchRecordException ex) {
-            System.out.println("Login Incorrecto");
+           throw new Exceptions(Exceptions.INCORRECT_LOGIN);
         }
         return e;
     }
@@ -98,7 +104,7 @@ public class NeoDAO implements AutoCloseable {
         }
     }
 
-    /*public List getAllEmployees() {
+    public List getAllEmployees() throws Exceptions {
         List<Employee> employees = new ArrayList();
         try (Session session = driver.session()) {
             StatementResult rs = session.run("MATCH(e:Employee) RETURN id(e) as id,e.username as username,e.password as password");
@@ -111,10 +117,10 @@ public class NeoDAO implements AutoCloseable {
                 employees.add(e);
             }
         } catch (NoSuchRecordException ex) {
-            System.out.println("No hay empleados");
+            throw new Exceptions(Exceptions.THERE_IS_NO_EMPLOYEES);
         }
         return employees;
-    }*/
+    }
     public boolean userExists(Employee e) {
         boolean exists = false;
         try (Session session = driver.session()) {
@@ -127,7 +133,7 @@ public class NeoDAO implements AutoCloseable {
         return exists;
     }
 
-    public List getAllIncidences(Employee logged) {
+    public List<Incidence> selectAllIncidences(Employee logged) throws Exceptions {
         List<Incidence> incidences = new ArrayList();
         try (Session session = driver.session()) {
             String query = "MATCH(i:Incidence) WHERE i.sender=" + logged.getId() + " or i.receiver=" + logged.getId() + " RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
@@ -140,14 +146,10 @@ public class NeoDAO implements AutoCloseable {
                 String dateTime = list.get(i).get("date").asLocalDateTime().toString();
                 incidence.setCreationDate(dateTime);
 
-                Employee s = new Employee();
-                s.setId(list.get(i).get("receiverId").asInt());
-                Employee sender = getEmployeeById(s);
+                Employee sender = getEmployeeById(list.get(i).get("receiverId").asInt());
                 incidence.setOrigin(sender);
 
-                Employee r = new Employee();
-                r.setId(list.get(i).get("senderId").asInt());
-                Employee receiver = getEmployeeById(r);
+                Employee receiver = getEmployeeById(list.get(i).get("senderId").asInt());
                 incidence.setDestination(receiver);
 
                 incidence.setUrgent(list.get(i).get("urgent").asBoolean());
@@ -155,7 +157,7 @@ public class NeoDAO implements AutoCloseable {
                 incidences.add(incidence);
             }
         } catch (NoSuchRecordException ex) {
-            System.out.println(ex.getMessage());
+           throw new Exceptions(Exceptions.THERE_IS_NO_INCIDENCES);
 
         }
         return incidences;

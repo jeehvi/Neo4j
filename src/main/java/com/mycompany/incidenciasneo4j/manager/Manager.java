@@ -7,6 +7,7 @@ package com.mycompany.incidenciasneo4j.manager;
 
 import com.mycompany.incidenciasneo4j.InputAsker;
 import com.mycompany.incidenciasneo4j.dao.NeoDAO;
+import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
 import com.mycompany.incidenciasneo4j.model.Employee;
 import com.mycompany.incidenciasneo4j.model.Incidence;
 import java.util.List;
@@ -61,7 +62,7 @@ public class Manager {
                         break;
                     case 6:
                         //insert incidence
-
+                        insertIncidence();
                         break;
                     case 7:
                         //get incidence by destinator
@@ -111,7 +112,7 @@ public class Manager {
         System.out.println("0-EXIT");
     }
 
-    public boolean login() {
+    public boolean login() throws Exceptions {
         System.out.println("-----LOG IN-----");
         String username = InputAsker.askString("Username: ");
         String password = InputAsker.askString("Password: ");
@@ -123,7 +124,7 @@ public class Manager {
         return false;
     }
 
-    public void insertEmployee() {
+    public void insertEmployee() throws Exceptions {
         System.out.println("-----INSERT EMPLOYEE-----");
         String username = InputAsker.askString("Username: /(0) TO CANCEL");
         if (username.equals("0")) {
@@ -200,10 +201,47 @@ public class Manager {
         }
 
     }
+    
+    public void insertIncidence() throws Exceptions{
+        System.out.println("-----INSERT INCIDENCE-----");
+        List<Employee> employees = dao.getAllEmployees();
+        for(Employee e: employees){
+            System.out.println("Employee "+e.getId()+"  ->  Username: "+e.getUsername() + "Department");
+        }
+        System.out.println("Choose the receiver of your incidence by ID");
+        Incidence newIncidence = new Incidence();
+        int IncTo = InputAsker.askInt("Receiver of the incidence by Id:");
+        Employee receiver = dao.getEmployeeById(IncTo);
+        if(receiver == null){
+            System.out.println("Wrong employee");
+        } else {
+            newIncidence.setOrigin(userLogged);
+            newIncidence.setDestination(receiver);
+            String urgent = InputAsker.askString("Urgent Incidence?(y/n)");
+            switch(urgent){
+                case "n":
+                case "no":
+                    newIncidence.setUrgent(false);
+                break;
+                case "y":
+                case "yes":
+                    newIncidence.setUrgent(true);
+                    break;
+                default:
+                    newIncidence.setUrgent(false);
+                    System.out.println("Weird answer, incidence set automatically to not urgent");
+                    break;
+            }
+            String description =InputAsker.askString("Description of the Incidence:");
+            newIncidence.setDescription(description);
+            dao.insertIncidence(newIncidence);
+        }
+        
+    }
 
-    public void getIncidenceById() {
+    public void getIncidenceById() throws Exceptions {
         System.out.println("-----SHOW INCIDENCE DETAILS-----");
-        List<Incidence> list = dao.getAllIncidences(userLogged);
+        List<Incidence> list = dao.selectAllIncidences(userLogged);
         for (Incidence i : list) {
                 System.out.println("Incidence " + i.getId() + "  ->  Sender: " + i.getOrigin().getUsername() + " Receiver: " + i.getDestination().getUsername());
         }
