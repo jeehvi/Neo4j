@@ -7,11 +7,10 @@ package com.mycompany.incidenciasneo4j.dao;
 
 import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
 import com.mycompany.incidenciasneo4j.model.Employee;
+import com.mycompany.incidenciasneo4j.model.Event;
 import com.mycompany.incidenciasneo4j.model.Incidence;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,10 +20,6 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
-import org.neo4j.driver.v1.Transaction;
-import org.neo4j.driver.v1.TransactionWork;
-
-import static org.neo4j.driver.v1.Values.parameters;
 import org.neo4j.driver.v1.exceptions.NoSuchRecordException;
 
 /**
@@ -56,10 +51,10 @@ public class NeoDAO implements AutoCloseable {
 
     public void insertIncidence(Incidence i) {
         Date date = new Date();
-        DateFormat df = new SimpleDateFormat("yyyy/MM/dd hh:mm");
+        DateFormat df = new SimpleDateFormat("dd/MM/yyyy hh:mm");
         String creationDate = df.format(date);
         try (Session session = driver.session()) {
-            session.run("CREATE (incidence:Incidence{creationDate:'"+creationDate+"',sender:"+i.getOrigin().getId()+",receiver:"+i.getDestination().getId()+",urgent:"+i.isUrgent()+",description:'"+i.getDescription()+"'})");
+            session.run("CREATE (incidence:Incidence{creationDate:'" + creationDate + "',sender:" + i.getOrigin().getId() + ",receiver:" + i.getDestination().getId() + ",urgent:" + i.isUrgent() + ",description:'" + i.getDescription() + "'})");
         }
     }
 
@@ -71,7 +66,7 @@ public class NeoDAO implements AutoCloseable {
             emp.setId(record.get("id").asInt());
             emp.setUsername(record.get("username").asString());
             emp.setPass(record.get("password").asString());
-        }catch(NoSuchRecordException ex){
+        } catch (NoSuchRecordException ex) {
             throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
         }
         return emp;
@@ -87,7 +82,7 @@ public class NeoDAO implements AutoCloseable {
             e.setPass(record.get("password").asString());
             e.setDepartment(record.get("department").asString());
         } catch (NoSuchRecordException ex) {
-           throw new Exceptions(Exceptions.INCORRECT_LOGIN);
+            throw new Exceptions(Exceptions.INCORRECT_LOGIN);
         }
         return e;
     }
@@ -121,6 +116,7 @@ public class NeoDAO implements AutoCloseable {
         }
         return employees;
     }
+
     public boolean userExists(Employee e) {
         boolean exists = false;
         try (Session session = driver.session()) {
@@ -133,7 +129,7 @@ public class NeoDAO implements AutoCloseable {
         return exists;
     }
 
-    public List<Incidence> selectAllIncidences(Employee logged) throws Exceptions {
+    public List<Incidence> selectUserIncidences(Employee logged) throws Exceptions {
         List<Incidence> incidences = new ArrayList();
         try (Session session = driver.session()) {
             String query = "MATCH(i:Incidence) WHERE i.sender=" + logged.getId() + " or i.receiver=" + logged.getId() + " RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
@@ -143,8 +139,8 @@ public class NeoDAO implements AutoCloseable {
                 Incidence incidence = new Incidence();
                 incidence.setId(list.get(i).get("id").asInt());
 
-                String dateTime = list.get(i).get("date").asLocalDateTime().toString();
-                incidence.setCreationDate(dateTime);
+                String date = list.get(i).get("date").asString();
+                incidence.setCreationDate(date);
 
                 Employee sender = getEmployeeById(list.get(i).get("receiverId").asInt());
                 incidence.setOrigin(sender);
@@ -157,9 +153,130 @@ public class NeoDAO implements AutoCloseable {
                 incidences.add(incidence);
             }
         } catch (NoSuchRecordException ex) {
-           throw new Exceptions(Exceptions.THERE_IS_NO_INCIDENCES);
 
+            throw new Exceptions(Exceptions.THERE_IS_NO_INCIDENCES);
+        }
+
+        return incidences;
+    }
+
+    public List<Incidence> selectAllIncidences() throws Exceptions {
+        List<Incidence> incidences = new ArrayList();
+        try (Session session = driver.session()) {
+            String query = "MATCH(i:Incidence) RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
+            StatementResult rs = session.run(query);
+            List<Record> list = rs.list();
+            for (int i = 0; i < list.size(); i++) {
+                Incidence incidence = new Incidence();
+                incidence.setId(list.get(i).get("id").asInt());
+
+                String date = list.get(i).get("date").asString();
+                incidence.setCreationDate(date);
+
+                Employee sender = getEmployeeById(list.get(i).get("receiverId").asInt());
+                incidence.setOrigin(sender);
+
+                Employee receiver = getEmployeeById(list.get(i).get("senderId").asInt());
+                incidence.setDestination(receiver);
+
+                incidence.setUrgent(list.get(i).get("urgent").asBoolean());
+                incidence.setDescription(list.get(i).get("description").asString());
+                incidences.add(incidence);
+            }
+        } catch (NoSuchRecordException ex) {
+            throw new Exceptions(Exceptions.THERE_IS_NO_INCIDENCES);
         }
         return incidences;
     }
+    
+    public List<Incidence> getIncidenceByDestinator(Employee e) throws Exceptions{
+        List<Incidence> incidences = new ArrayList();
+        try (Session session = driver.session()) {
+            String query = "MATCH(i:Incidence) WHERE i.receiver=" + e.getId() + " RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
+            StatementResult rs = session.run(query);
+            List<Record> list = rs.list();
+            for (int i = 0; i < list.size(); i++) {
+                Incidence incidence = new Incidence();
+                incidence.setId(list.get(i).get("id").asInt());
+
+                String date = list.get(i).get("date").asString();
+                incidence.setCreationDate(date);
+
+                Employee sender = getEmployeeById(list.get(i).get("receiverId").asInt());
+                incidence.setOrigin(sender);
+
+                Employee receiver = getEmployeeById(list.get(i).get("senderId").asInt());
+                incidence.setDestination(receiver);
+
+                incidence.setUrgent(list.get(i).get("urgent").asBoolean());
+                incidence.setDescription(list.get(i).get("description").asString());
+                incidences.add(incidence);
+            }
+        } catch (NoSuchRecordException ex) {
+            throw new Exceptions(Exceptions.EMPLOYEE_HAS_NO_INCIDENCES);
+        }
+        return incidences;
+    }
+    
+    /**
+     * Method to create an Event
+     *
+     * @param e
+     * @throws Exceptions
+     */
+    public void insertEvent(Event e) throws Exceptions {
+        String messageEvent = geteventMessage(e.getTypeEvent());
+        try (Session session = driver.session()) {
+            session.run("CREATE (e:Event{creationDate:" + e.getDate() + ", employeeName:" + e.getEmployee().getUsername() + ",typeEvent:" + messageEvent + "})");
+        } catch (NoSuchRecordException ex) {
+            throw new Exceptions(Exceptions.FAIL_CREATE_EVENT);
+        }
+    }
+    
+        /**
+     * Send an int code and returns an String message
+     *
+     * @param i
+     * @return
+     */
+    public String geteventMessage(int i) {
+        String message = "";
+        switch (i) {
+            case 1:
+                message = "login";
+                break;
+            case 2:
+                message = "urgent";
+                break;
+            case 3:
+                message = "checkUserReceiver";
+                break;
+        }
+        return message;
+    }
+
+    /**
+     * Send an String message and returns an int code
+     *
+     * @param s
+     * @return
+     */
+    public int setEventCode(String s) {
+        int code = 0;
+        switch (s) {
+            case "login":
+                code = 1;
+                break;
+            case "urgent":
+                code = 2;
+                break;
+            case "checkUserReceiver":
+                code = 3;
+                break;
+        }
+        return code;
+    }
+
+
+    
 }

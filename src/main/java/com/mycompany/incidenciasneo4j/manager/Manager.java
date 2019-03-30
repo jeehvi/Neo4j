@@ -58,7 +58,7 @@ public class Manager {
                         break;
                     case 5:
                         //get all incidences
-
+                        getAllIncidences();
                         break;
                     case 6:
                         //insert incidence
@@ -201,64 +201,78 @@ public class Manager {
         }
 
     }
-    
-    public void insertIncidence() throws Exceptions{
+
+    public void insertIncidence() throws Exceptions {
         System.out.println("-----INSERT INCIDENCE-----");
         List<Employee> employees = dao.getAllEmployees();
-        for(Employee e: employees){
-            System.out.println("Employee "+e.getId()+"  ->  Username: "+e.getUsername() + "Department");
+        for (Employee e : employees) {
+            System.out.println("Employee " + e.getId() + "  ->  Username: " + e.getUsername() + "Department: "+e.getDepartment());
         }
         System.out.println("Choose the receiver of your incidence by ID");
         Incidence newIncidence = new Incidence();
         int IncTo = InputAsker.askInt("Receiver of the incidence by Id:");
         Employee receiver = dao.getEmployeeById(IncTo);
-        if(receiver == null){
-            System.out.println("Wrong employee");
-        } else {
-            newIncidence.setOrigin(userLogged);
-            newIncidence.setDestination(receiver);
-            String urgent = InputAsker.askString("Urgent Incidence?(y/n)");
-            switch(urgent){
-                case "n":
-                case "no":
-                    newIncidence.setUrgent(false);
+
+        newIncidence.setOrigin(userLogged);
+        newIncidence.setDestination(receiver);
+        String urgent = InputAsker.askString("Urgent Incidence?(y/n)");
+        switch (urgent) {
+            case "n":
+            case "no":
+                newIncidence.setUrgent(false);
                 break;
-                case "y":
-                case "yes":
-                    newIncidence.setUrgent(true);
-                    break;
-                default:
-                    newIncidence.setUrgent(false);
-                    System.out.println("Weird answer, incidence set automatically to not urgent");
-                    break;
-            }
-            String description =InputAsker.askString("Description of the Incidence:");
-            newIncidence.setDescription(description);
-            dao.insertIncidence(newIncidence);
+            case "y":
+            case "yes":
+                newIncidence.setUrgent(true);
+                break;
+            default:
+                newIncidence.setUrgent(false);
+                System.out.println("Weird answer, incidence set automatically to not urgent");
+                break;
         }
-        
+        String description = InputAsker.askString("Description of the Incidence:");
+        newIncidence.setDescription(description);
+        dao.insertIncidence(newIncidence);
+
+    }
+    
+    public void getAllIncidences() throws Exceptions{
+        System.out.println("-----SHOW ALL INCIDENCES-----");
+       List<Incidence> list = dao.selectAllIncidences();
+       for(Incidence i: list){
+           System.out.println(i.toString());
+       }
     }
 
     public void getIncidenceById() throws Exceptions {
         System.out.println("-----SHOW INCIDENCE DETAILS-----");
-        List<Incidence> list = dao.selectAllIncidences(userLogged);
+        List<Incidence> list = dao.selectUserIncidences(userLogged);
         for (Incidence i : list) {
-                System.out.println("Incidence " + i.getId() + "  ->  Sender: " + i.getOrigin().getUsername() + " Receiver: " + i.getDestination().getUsername());
+            System.out.println("Incidence " + i.getId() + "  ->  Sender: " + i.getOrigin().getUsername() + " Receiver: " + i.getDestination().getUsername());
         }
         int incidence = InputAsker.askInt("See details of Incidence with id: ");
         boolean exists = false;
         Incidence choosen = new Incidence();
-        for(Incidence i : list){
-            if(i.getId() == incidence){
+        for (Incidence i : list) {
+            if (i.getId() == incidence) {
                 choosen = i;
                 exists = true;
             }
         }
-        if(!exists){
+        if (!exists) {
             System.out.println("Incorrect Incidence");
-        } else{
-            System.out.println("Incidence: "+choosen.getId() + "  -> Creation Date: "+choosen.getCreationDate()+" Sender: " + choosen.getOrigin().getUsername() + " Receiver: " + choosen.getDestination().getUsername() + " Description: "+choosen.getDescription());
+        } else {
+            System.out.println("Incidence: " + choosen.getId() + "  -> Creation Date: " + choosen.getCreationDate() + " Sender: " + choosen.getOrigin().getUsername() + " Receiver: " + choosen.getDestination().getUsername() + " Description: " + choosen.getDescription());
         }
+    }
+    
+    public void getIncidenceByDestination() throws Exceptions{
+        System.out.println("----SHOW DESTINATION EMPLOYEE INCIDENCES-----");
+        List<Employee> employees = dao.getAllEmployees();
+        for(Employee e: employees){
+            System.out.println(e.toString());
+        }
+        int id = InputAsker.askInt("From which employee do you want to see all the Incidences received?");
     }
 
 }

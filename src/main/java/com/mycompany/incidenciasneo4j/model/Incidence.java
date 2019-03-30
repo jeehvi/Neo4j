@@ -126,11 +126,11 @@ public class Incidence {
     public String toString() {
         String urgent = "";
         if(this.urgent == true){
-            urgent = "Incidencia urgente";
+            urgent = "Urgent Incidence!";
         } else {
-            urgent = "Incidencia no urgente";
+            urgent = "Not Urgent Incidence";
         }
-        return "Incidence{" + "id=" + id + ", creationDate=" + creationDate + ", employeeReceiver=" + employeeReceiver.getUsername() + ", employeeSender=" + employeeSender.getUsername() + ", urgent=" + urgent + ", description=" + description + '}';
+        return "Incidence{Creation Date = " + creationDate + ", Employee origin = " + employeeReceiver.getUsername() + ", Destination employee = " + employeeSender.getUsername() + ", Urgent/Not Urgent = " + urgent + ", Description = " + description + '}';
     }
     
     
