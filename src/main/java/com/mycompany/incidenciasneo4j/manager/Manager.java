@@ -7,7 +7,6 @@ package com.mycompany.incidenciasneo4j.manager;
 
 import com.mycompany.incidenciasneo4j.InputAsker;
 import com.mycompany.incidenciasneo4j.dao.NeoDAO;
-import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
 import com.mycompany.incidenciasneo4j.model.Employee;
 import com.mycompany.incidenciasneo4j.model.Event;
 import com.mycompany.incidenciasneo4j.model.Incidence;
@@ -27,11 +26,12 @@ public class Manager {
     Employee userLogged = new Employee();
 
     public void callMenu() {
+
         try {
-            boolean goodLogin = false;
+            boolean checkLogin = false;
             do {
-                goodLogin = login();
-            } while (goodLogin == false);
+                checkLogin = login();
+            } while (checkLogin == false);
 
             int op;
             boolean end = false;
@@ -114,7 +114,7 @@ public class Manager {
         System.out.println("0-EXIT");
     }
 
-    public boolean login() throws Exceptions {
+    public boolean login() {
         System.out.println("-----LOG IN-----");
         String username = InputAsker.askString("Username: ");
         String password = InputAsker.askString("Password: ");
@@ -131,7 +131,7 @@ public class Manager {
         return false;
     }
 
-    public void insertEmployee() throws Exceptions {
+    public void insertEmployee(){
         System.out.println("-----INSERT EMPLOYEE-----");
         String username = InputAsker.askString("Username: /(0) TO CANCEL");
         if (username.equals("0")) {
@@ -209,7 +209,7 @@ public class Manager {
 
     }
 
-    public void insertIncidence() throws Exceptions {
+    public void insertIncidence(){
         System.out.println("-----INSERT INCIDENCE-----");
         List<Employee> employees = dao.getAllEmployees();
         for (Employee e : employees) {
@@ -243,7 +243,7 @@ public class Manager {
 
     }
 
-    public void getAllIncidences() throws Exceptions {
+    public void getAllIncidences() {
         System.out.println("-----SHOW ALL INCIDENCES-----");
         List<Incidence> list = dao.selectAllIncidences();
         for (Incidence i : list) {
@@ -251,7 +251,7 @@ public class Manager {
         }
     }
 
-    public void getIncidenceById() throws Exceptions {
+    public void getIncidenceById() {
         System.out.println("-----SHOW INCIDENCE DETAILS-----");
         List<Incidence> list = dao.selectUserIncidences(userLogged);
         for (Incidence i : list) {
@@ -273,7 +273,7 @@ public class Manager {
         }
     }
 
-    public void getIncidenceByDestination() throws Exceptions {
+    public void getIncidenceByDestination(){
         System.out.println("-----SHOW DESTINATION EMPLOYEE INCIDENCES-----");
         List<Employee> employees = dao.getAllEmployees();
         for (Employee e : employees) {
@@ -288,7 +288,7 @@ public class Manager {
             }
         }
         if (!exists) {
-            throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
+            System.out.println("Employee not exists");
         } else {
             Employee selected = dao.getEmployeeById(id);
             System.out.println("Incidences that " + selected.getUsername() + " has received:");
@@ -299,7 +299,7 @@ public class Manager {
         }
     }
 
-    public void getIncidenceByOrigin() throws Exceptions {
+    public void getIncidenceByOrigin() {
         System.out.println("-----SHOW ORIGIN EMPLOYEE INCIDENCES-----");
         List<Employee> employees = dao.getAllEmployees();
         for (Employee e : employees) {
@@ -314,7 +314,7 @@ public class Manager {
             }
         }
         if (!exists) {
-            throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
+            System.out.println("Employee does not exists");
         } else {
             Employee selected = dao.getEmployeeById(id);
             System.out.println("Incidences that " + selected.getUsername() + " has sent:");
@@ -325,14 +325,14 @@ public class Manager {
         }
     }
 
-    public void getUserLastAcces() throws Exceptions, Exception {
+    public void getUserLastAcces() throws Exception {
         System.out.println("-----GET USER LAST ACCES-----");
         List<Employee> emp = dao.getAllEmployees();
         for (Employee e : emp) {
             System.out.println(e.toString());
         }
         int selected = InputAsker.askInt("What employee do you want to see the last acces?");
-         boolean exists = false;
+        boolean exists = false;
         for (Employee e : emp) {
             if (e.getId() == selected) {
                 exists = true;
@@ -340,23 +340,21 @@ public class Manager {
         }
         if (!exists) {
             System.out.println("User doesn't exists");
-        }else {
-           Employee e = dao.getEmployeeById(selected);
-           Event event = dao.getUserLastAcces(e);
-            System.out.println("User "+event.getEmployee().getUsername() + " last acces was at "+event.getDate());
-        }
-    }
-    
-    public void Ranking() throws Exceptions{
-        System.out.println("-----RANKING BY URGENT INCIDENCES-----");
-        List<RankingTo> ranking = dao.getRankingEmployees();
-        int contador=0;
-        for(RankingTo r: ranking){
-            contador++;
-            System.out.println(contador + " "+r.toString());
+        } else {
+            Employee e = dao.getEmployeeById(selected);
+            Event event = dao.getUserLastAcces(e);
+            System.out.println("User " + event.getEmployee().getUsername() + " last acces was at " + event.getDate());
         }
     }
 
-    
+    public void Ranking() {
+        System.out.println("-----RANKING BY URGENT INCIDENCES-----");
+        List<RankingTo> ranking = dao.getRankingEmployees();
+        int contador = 0;
+        for (RankingTo r : ranking) {
+            contador++;
+            System.out.println(contador + " " + r.toString());
+        }
+    }
 
 }
