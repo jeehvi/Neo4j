@@ -5,10 +5,13 @@
  */
 package com.mycompany.incidenciasneo4j.dao;
 
+import com.mycompany.incidenciasneo4j.Main;
 import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
+import com.mycompany.incidenciasneo4j.manager.Manager;
 import com.mycompany.incidenciasneo4j.model.Employee;
 import com.mycompany.incidenciasneo4j.model.Event;
 import com.mycompany.incidenciasneo4j.model.Incidence;
+import com.mycompany.incidenciasneo4j.model.RankingTo;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,6 +32,7 @@ import org.neo4j.driver.v1.exceptions.NoSuchRecordException;
 public class NeoDAO implements AutoCloseable {
 
     private final Driver driver;
+    Manager manager = Main.manager;
 
     public NeoDAO(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
@@ -251,6 +255,20 @@ public class NeoDAO implements AutoCloseable {
         }
         return incidences;
     }
+      
+      public Event getUserLastAcces(Employee e) throws Exceptions{
+          Event acces = new Event();
+          try (Session session = driver.session()) {
+            StatementResult rs = session.run("Match(e:Event) where e.Employee='"+e.getId()+"' and e.typeEvent = 'login' return e.Date,e.Employee,e.typeEvent  order by e.Date desc limit 1");
+            Record record = rs.next();
+           acces.setDate(record.get("e.Date").asString());
+           acces.setEmployee(getEmployeeById(Integer.parseInt(record.get("e.Employee").asString())));
+           acces.setTypeEvent(setEventCode(record.get("e.typeEvent").asString()));
+        } catch (NoSuchRecordException ex) {
+              throw new Exceptions(Exceptions.USER_HAS_NOT_LOGIN_YET);
+        }
+          return acces;
+      }
     
     /**
      * Method to create an Event
@@ -266,6 +284,46 @@ public class NeoDAO implements AutoCloseable {
             System.out.println(ex.getMessage());
             throw new Exceptions(Exceptions.FAIL_CREATE_EVENT);
         }
+    }
+    
+    public List<RankingTo> getRankingEmployees() throws Exceptions{
+        List<RankingTo> ranking = new ArrayList();
+         try (Session session = driver.session()) {
+            StatementResult rs = session.run("MATCH(e:Incidence) WHERE e.urgent = true RETURN count(e.sender) as incidencias,e.sender order by incidencias desc");
+            List<Record> record = rs.list();
+            for(Record r: record){
+                RankingTo rt= new RankingTo();
+                Employee sender = getEmployeeById(r.get("e.sender").asInt());
+                rt.setUsername(sender.getUsername());
+                rt.setnIncidences(r.get("incidencias").asInt());
+                ranking.add(rt);
+            }
+        } catch (NoSuchRecordException ex) {
+              throw new Exceptions(Exceptions.USER_HAS_NOT_LOGIN_YET);
+        }
+        return ranking;
+    }
+    
+    /**
+     * Send an String message and returns an int code
+     *
+     * @param s
+     * @return
+     */
+    public int setEventCode(String s) {
+        int code = 0;
+        switch (s) {
+            case "login":
+                code = 1;
+                break;
+            case "urgent incidence":
+                code = 2;
+                break;
+            case "checkUserReceiver":
+                code = 3;
+                break;
+        }
+        return code;
     }
     
         /**

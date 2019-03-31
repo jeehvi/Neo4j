@@ -20,6 +20,7 @@ public class Exceptions extends Exception {
     public static final int USERNAME_EXISTS = 4;
     public static final int EMPLOYEE_HAS_NO_INCIDENCES = 5;
     public static final int FAIL_CREATE_EVENT = 5;
+    public static final int USER_HAS_NOT_LOGIN_YET = 6;
    
     private final int code;
     
@@ -30,7 +31,8 @@ public class Exceptions extends Exception {
             "There is no Incidences on our database",
             "Username already exists",
             "This Employee doesn't have any Incidence",
-            "Event not created correctly"
+            "Event not created correctly",
+            "This user has not login yet"
     );
 
     public Exceptions(int code) {

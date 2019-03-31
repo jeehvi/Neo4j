@@ -11,13 +11,11 @@ import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
 import com.mycompany.incidenciasneo4j.model.Employee;
 import com.mycompany.incidenciasneo4j.model.Event;
 import com.mycompany.incidenciasneo4j.model.Incidence;
+import com.mycompany.incidenciasneo4j.model.RankingTo;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.neo4j.driver.v1.Record;
 
 /**
  *
@@ -82,11 +80,11 @@ public class Manager {
                         break;
                     case 10:
                         //Get last acces from an employee
-
+                        getUserLastAcces();
                         break;
                     case 11:
                         //employee ranking by number of incidences
-
+                        Ranking();
                         break;
                     default:
                         System.out.println("Wrong option");
@@ -126,7 +124,7 @@ public class Manager {
             Date date = new Date();
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy hh:mm");
             String loginDate = df.format(date);
-            Event login = new Event(loginDate,userLogged,1);
+            Event login = new Event(loginDate, userLogged, 1);
             dao.insertEvent(login);
             return true;
         }
@@ -327,26 +325,38 @@ public class Manager {
         }
     }
 
-    /**
-     * Send an String message and returns an int code
-     *
-     * @param s
-     * @return
-     */
-    public int setEventCode(String s) {
-        int code = 0;
-        switch (s) {
-            case "login":
-                code = 1;
-                break;
-            case "urgent incidence":
-                code = 2;
-                break;
-            case "checkUserReceiver":
-                code = 3;
-                break;
+    public void getUserLastAcces() throws Exceptions, Exception {
+        System.out.println("-----GET USER LAST ACCES-----");
+        List<Employee> emp = dao.getAllEmployees();
+        for (Employee e : emp) {
+            System.out.println(e.toString());
         }
-        return code;
+        int selected = InputAsker.askInt("What employee do you want to see the last acces?");
+         boolean exists = false;
+        for (Employee e : emp) {
+            if (e.getId() == selected) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            System.out.println("User doesn't exists");
+        }else {
+           Employee e = dao.getEmployeeById(selected);
+           Event event = dao.getUserLastAcces(e);
+            System.out.println("User "+event.getEmployee().getUsername() + " last acces was at "+event.getDate());
+        }
     }
+    
+    public void Ranking() throws Exceptions{
+        System.out.println("-----RANKING BY URGENT INCIDENCES-----");
+        List<RankingTo> ranking = dao.getRankingEmployees();
+        int contador=0;
+        for(RankingTo r: ranking){
+            contador++;
+            System.out.println(contador + " "+r.toString());
+        }
+    }
+
+    
 
 }

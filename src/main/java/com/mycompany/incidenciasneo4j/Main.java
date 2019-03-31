@@ -14,9 +14,9 @@ import com.mycompany.incidenciasneo4j.manager.Manager;
  */
 public class Main {
     
-    
+    public static  Manager manager ;
     public static void main(String[] args) {
-    Manager manager = new Manager(); 
+   manager = new Manager(); 
       
     manager.callMenu();
     
