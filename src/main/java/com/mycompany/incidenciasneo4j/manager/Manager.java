@@ -9,7 +9,11 @@ import com.mycompany.incidenciasneo4j.InputAsker;
 import com.mycompany.incidenciasneo4j.dao.NeoDAO;
 import com.mycompany.incidenciasneo4j.exceptions.Exceptions;
 import com.mycompany.incidenciasneo4j.model.Employee;
+import com.mycompany.incidenciasneo4j.model.Event;
 import com.mycompany.incidenciasneo4j.model.Incidence;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -66,11 +70,11 @@ public class Manager {
                         break;
                     case 7:
                         //get incidence by destinator
-
+                        getIncidenceByDestination();
                         break;
                     case 8:
                         //get incidence by origin
-
+                        getIncidenceByOrigin();
                         break;
                     case 9:
                         //insert event to history table
@@ -119,6 +123,11 @@ public class Manager {
         Employee e = dao.loginEmployee(username, password);
         if (e.getUsername() != null) {
             userLogged = e;
+            Date date = new Date();
+            DateFormat df = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+            String loginDate = df.format(date);
+            Event login = new Event(loginDate,userLogged,1);
+            dao.insertEvent(login);
             return true;
         }
         return false;
@@ -206,7 +215,7 @@ public class Manager {
         System.out.println("-----INSERT INCIDENCE-----");
         List<Employee> employees = dao.getAllEmployees();
         for (Employee e : employees) {
-            System.out.println("Employee " + e.getId() + "  ->  Username: " + e.getUsername() + "Department: "+e.getDepartment());
+            System.out.println("Employee " + e.getId() + "  ->  Username: " + e.getUsername() + "Department: " + e.getDepartment());
         }
         System.out.println("Choose the receiver of your incidence by ID");
         Incidence newIncidence = new Incidence();
@@ -235,13 +244,13 @@ public class Manager {
         dao.insertIncidence(newIncidence);
 
     }
-    
-    public void getAllIncidences() throws Exceptions{
+
+    public void getAllIncidences() throws Exceptions {
         System.out.println("-----SHOW ALL INCIDENCES-----");
-       List<Incidence> list = dao.selectAllIncidences();
-       for(Incidence i: list){
-           System.out.println(i.toString());
-       }
+        List<Incidence> list = dao.selectAllIncidences();
+        for (Incidence i : list) {
+            System.out.println(i.toString());
+        }
     }
 
     public void getIncidenceById() throws Exceptions {
@@ -265,14 +274,79 @@ public class Manager {
             System.out.println("Incidence: " + choosen.getId() + "  -> Creation Date: " + choosen.getCreationDate() + " Sender: " + choosen.getOrigin().getUsername() + " Receiver: " + choosen.getDestination().getUsername() + " Description: " + choosen.getDescription());
         }
     }
-    
-    public void getIncidenceByDestination() throws Exceptions{
-        System.out.println("----SHOW DESTINATION EMPLOYEE INCIDENCES-----");
+
+    public void getIncidenceByDestination() throws Exceptions {
+        System.out.println("-----SHOW DESTINATION EMPLOYEE INCIDENCES-----");
         List<Employee> employees = dao.getAllEmployees();
-        for(Employee e: employees){
+        for (Employee e : employees) {
             System.out.println(e.toString());
         }
         int id = InputAsker.askInt("From which employee do you want to see all the Incidences received?");
+
+        boolean exists = false;
+        for (Employee e : employees) {
+            if (e.getId() == id) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
+        } else {
+            Employee selected = dao.getEmployeeById(id);
+            System.out.println("Incidences that " + selected.getUsername() + " has received:");
+            List<Incidence> incidences = dao.getIncidencesByDestinator(selected);
+            for (Incidence i : incidences) {
+                System.out.println(i.toString());
+            }
+        }
+    }
+
+    public void getIncidenceByOrigin() throws Exceptions {
+        System.out.println("-----SHOW ORIGIN EMPLOYEE INCIDENCES-----");
+        List<Employee> employees = dao.getAllEmployees();
+        for (Employee e : employees) {
+            System.out.println(e.toString());
+        }
+        int id = InputAsker.askInt("From which employee do you want to see all the Incidences he/she has sent?");
+
+        boolean exists = false;
+        for (Employee e : employees) {
+            if (e.getId() == id) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
+        } else {
+            Employee selected = dao.getEmployeeById(id);
+            System.out.println("Incidences that " + selected.getUsername() + " has sent:");
+            List<Incidence> incidences = dao.getIncidencesByOrigin(selected);
+            for (Incidence i : incidences) {
+                System.out.println(i.toString());
+            }
+        }
+    }
+
+    /**
+     * Send an String message and returns an int code
+     *
+     * @param s
+     * @return
+     */
+    public int setEventCode(String s) {
+        int code = 0;
+        switch (s) {
+            case "login":
+                code = 1;
+                break;
+            case "urgent incidence":
+                code = 2;
+                break;
+            case "checkUserReceiver":
+                code = 3;
+                break;
+        }
+        return code;
     }
 
 }

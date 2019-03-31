@@ -61,11 +61,12 @@ public class NeoDAO implements AutoCloseable {
     public Employee getEmployeeById(int id) throws Exceptions {
         Employee emp = new Employee();
         try (Session session = driver.session()) {
-            StatementResult x = session.run("MATCH(e:Employee) where id(e)=" + id + " return id(e) as id,e.username as username,e.password as password");
+            StatementResult x = session.run("MATCH(e:Employee) where id(e)=" + id + " return id(e) as id,e.username as username,e.password as password,e.department as department");
             Record record = x.next();
             emp.setId(record.get("id").asInt());
             emp.setUsername(record.get("username").asString());
             emp.setPass(record.get("password").asString());
+            emp.setDepartment(record.get("department").asString());
         } catch (NoSuchRecordException ex) {
             throw new Exceptions(Exceptions.EMPLOYEE_DO_NOT_EXIST);
         }
@@ -102,13 +103,14 @@ public class NeoDAO implements AutoCloseable {
     public List getAllEmployees() throws Exceptions {
         List<Employee> employees = new ArrayList();
         try (Session session = driver.session()) {
-            StatementResult rs = session.run("MATCH(e:Employee) RETURN id(e) as id,e.username as username,e.password as password");
+            StatementResult rs = session.run("MATCH(e:Employee) RETURN id(e) as id,e.username as username,e.password as password,e.department as department");
             List<Record> list = rs.list();
             for (int i = 0; i < list.size(); i++) {
                 Employee e = new Employee();
                 e.setId(list.get(i).get("id").asInt());
                 e.setUsername(list.get(i).get("username").asString());
                 e.setPass(list.get(i).get("password").asString());
+                e.setDepartment(list.get(i).get("department").asString());
                 employees.add(e);
             }
         } catch (NoSuchRecordException ex) {
@@ -189,7 +191,7 @@ public class NeoDAO implements AutoCloseable {
         return incidences;
     }
     
-    public List<Incidence> getIncidenceByDestinator(Employee e) throws Exceptions{
+    public List<Incidence> getIncidencesByDestinator(Employee e) throws Exceptions{
         List<Incidence> incidences = new ArrayList();
         try (Session session = driver.session()) {
             String query = "MATCH(i:Incidence) WHERE i.receiver=" + e.getId() + " RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
@@ -218,6 +220,38 @@ public class NeoDAO implements AutoCloseable {
         return incidences;
     }
     
+      public List<Incidence> getIncidencesByOrigin(Employee e) throws Exceptions{
+        List<Incidence> incidences = new ArrayList();
+        try (Session session = driver.session()) {
+            String query = "MATCH(i:Incidence) WHERE i.sender=" + e.getId() + " RETURN id(i) as id,i.creationDate as date,i.sender as senderId,i.receiver as receiverId,i.urgent as urgent,i.description as description";
+            StatementResult rs = session.run(query);
+            List<Record> list = rs.list();
+            for (int i = 0; i < list.size(); i++) {
+                Incidence incidence = new Incidence();
+                incidence.setId(list.get(i).get("id").asInt());
+
+                String date = list.get(i).get("date").asString();
+                incidence.setCreationDate(date);
+
+                Employee sender = getEmployeeById(list.get(i).get("receiverId").asInt());
+                incidence.setOrigin(sender);
+
+                Employee receiver = getEmployeeById(list.get(i).get("senderId").asInt());
+                incidence.setDestination(receiver);
+
+                incidence.setUrgent(list.get(i).get("urgent").asBoolean());
+                incidence.setDescription(list.get(i).get("description").asString());
+                incidences.add(incidence);
+            }
+            if(list.size()==0){
+                System.out.println("This employee does not have any Incidence");
+            }
+        } catch (NoSuchRecordException ex) {
+            throw new Exceptions(Exceptions.EMPLOYEE_HAS_NO_INCIDENCES);
+        }
+        return incidences;
+    }
+    
     /**
      * Method to create an Event
      *
@@ -227,8 +261,9 @@ public class NeoDAO implements AutoCloseable {
     public void insertEvent(Event e) throws Exceptions {
         String messageEvent = geteventMessage(e.getTypeEvent());
         try (Session session = driver.session()) {
-            session.run("CREATE (e:Event{creationDate:" + e.getDate() + ", employeeName:" + e.getEmployee().getUsername() + ",typeEvent:" + messageEvent + "})");
+            session.run("CREATE (e:Event{Date:'" + e.getDate() + "', Employee:'" + e.getEmployee().getId() + "',typeEvent:'" + messageEvent + "'})");
         } catch (NoSuchRecordException ex) {
+            System.out.println(ex.getMessage());
             throw new Exceptions(Exceptions.FAIL_CREATE_EVENT);
         }
     }
@@ -246,7 +281,7 @@ public class NeoDAO implements AutoCloseable {
                 message = "login";
                 break;
             case 2:
-                message = "urgent";
+                message = "urgent incidence";
                 break;
             case 3:
                 message = "checkUserReceiver";
@@ -255,27 +290,7 @@ public class NeoDAO implements AutoCloseable {
         return message;
     }
 
-    /**
-     * Send an String message and returns an int code
-     *
-     * @param s
-     * @return
-     */
-    public int setEventCode(String s) {
-        int code = 0;
-        switch (s) {
-            case "login":
-                code = 1;
-                break;
-            case "urgent":
-                code = 2;
-                break;
-            case "checkUserReceiver":
-                code = 3;
-                break;
-        }
-        return code;
-    }
+    
 
 
     

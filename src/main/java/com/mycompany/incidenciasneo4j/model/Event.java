@@ -13,11 +13,11 @@ import java.util.Date;
  */
 public class Event {
 
-    private Date date;
+    private String date;
     private Employee employee;
     private int typeEvent;
 
-    public Event(Date date, Employee employee, int typeEvent) {
+    public Event(String date, Employee employee, int typeEvent) {
         this.date = date;
         this.employee = employee;
         this.typeEvent = typeEvent;
@@ -47,7 +47,7 @@ public class Event {
      *
      * @return the value of date
      */
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 
@@ -56,7 +56,7 @@ public class Event {
      *
      * @param date new value of date
      */
-    public void setDate(Date date) {
+    public void setDate(String date) {
         this.date = date;
     }
 
